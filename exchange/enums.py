@@ -77,8 +77,8 @@ class Databases(Enum):
 
 
 class MongoURIs(Enum):
-    Test = "mongodb+srv://benschlagman:Neh6x0VGiCo1jnIX@bf-exchange-test-01.tfbzy1n.mongodb.net/?retryWrites=true&w=majority"
-    Serverless = "mongodb+srv://matyashuba:qXvE54CiMELUbUMi@bf-exchange-01.2h7jxvl.mongodb.net/?retryWrites=true&w=majority&appName=bf-exchange-01"
+    Test = "your_test_uri"
+    Serverless = "your_serverless_uri"
 
     def __str__(self):
         return self.value
