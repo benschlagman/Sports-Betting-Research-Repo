@@ -1,6 +1,7 @@
 from enum import Enum
 from metadata import HorseRacingMetadataBuilder, FootballMetadataBuilder, TennisMetadataBuilder
 
+
 class MarketFilters(Enum):
     # ^ - start of the string, $ - end of the string
     FootballMarketRegex = r"(^MATCH_ODDS$)|(OVER)|(UNDER)|(_OU_)"
@@ -9,10 +10,10 @@ class MarketFilters(Enum):
 
     def __str__(self):
         return self.value
-    
+
     def __repr__(self):
         return self.value
-    
+
 
 class MetaBuilder(Enum):
     Football = FootballMetadataBuilder
@@ -21,10 +22,10 @@ class MetaBuilder(Enum):
 
     def __str__(self):
         return self.value
-    
+
     def __repr__(self):
         return self.value
-    
+
 
 class Sport(Enum):
     Football = "football"
@@ -33,10 +34,10 @@ class Sport(Enum):
 
     def __str__(self):
         return self.value
-    
+
     def __repr__(self):
         return self.value
-    
+
 
 class CountryFilters(Enum):
     FootballCountryRegex = r".*"
@@ -45,10 +46,10 @@ class CountryFilters(Enum):
 
     def __str__(self):
         return self.value
-    
+
     def __repr__(self):
         return self.value
-    
+
 
 class Collections(Enum):
     Metadata = "metadata"
@@ -57,10 +58,10 @@ class Collections(Enum):
 
     def __str__(self):
         return self.value
-    
+
     def __repr__(self):
         return self.value
-    
+
 
 class Databases(Enum):
     Football = "football_betfair"
@@ -70,7 +71,7 @@ class Databases(Enum):
 
     def __str__(self):
         return self.value
-    
+
     def __repr__(self):
         return self.value
 
@@ -81,19 +82,18 @@ class MongoURIs(Enum):
 
     def __str__(self):
         return self.value
-    
+
     def __repr__(self):
         return self.value
 
 
 class AWS(Enum):
-    Key = 'AKIAZXVKJEGNJYP2L2EC'
-    Secret = '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'
+    Key = 'to_be_addeded'
+    Secret = 'to_be_added'
     Bucket = 'historicdata-qst'
 
     def __str__(self):
         return self.value
-    
+
     def __repr__(self):
         return self.value
-    
