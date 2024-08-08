@@ -88,7 +88,6 @@ class MongoURIs(Enum):
 
 
 class AWS(Enum):
-
     Key = 'your_key'
     Secret = 'your_secret'
     Bucket = 'your_bucket'
