@@ -88,9 +88,10 @@ class MongoURIs(Enum):
 
 
 class AWS(Enum):
-    # Key = 'to_be_addeded'
-    # Secret = 'to_be_added'
-    Bucket = 'historicdata-qst'
+
+    Key = 'your_key'
+    Secret = 'your_secret'
+    Bucket = 'your_bucket'
 
     def __str__(self):
         return self.value
