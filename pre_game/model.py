@@ -1,33 +1,24 @@
-import math
 import pandas as pd
-import numpy as np
-from datetime import datetime
 
-from utils.data_utils import Season
 from utils.model_utils import Feature
 from data.process import DataProcessor, DataSet
 from pipeline.X_table_constructor import XTrainConstructor, XTestConstructor
 from pipeline.pre_processer import XTableEncoder, YSeriesEncoder, CrossChecker
 
-# import xgboost as xgb
-# from sklearn.svm import SVC
-# from category_encoders import OneHotEncoder
-# from sklearn.preprocessing import LabelEncoder
-# from catboost import CatBoostClassifier
+import xgboost as xgb
+from sklearn.svm import SVC
+from catboost import CatBoostClassifier
 
 from sklearn.metrics import f1_score
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import precision_score, recall_score
 
-from sklearn import preprocessing
 from sklearn.model_selection import KFold
-from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-
-# import shap
+from sklearn.neural_network import MLPClassifier
+from sklearn.ensemble import AdaBoostClassifier
 
 
 def get_feature_params():
@@ -70,7 +61,6 @@ def pre_process_data(df) -> tuple[DataSet, DataSet, list[str]]:
     data_processor = DataProcessor(df)
     unique_teams = data_processor.get_unique_teams()
     train, test = data_processor.split_data(train_test_ratio=0.95)
-    # train, test = data_processor.split_data_last_n(n=10)
 
     return train, test, unique_teams
 
@@ -96,25 +86,27 @@ def run(df, feature_params=get_feature_params()):
     X_train, y_train, X_test, y_test = feature_engineering(
         train, test, unique_teams, feature_params)
 
-    print(X_train)
+    lr = LogisticRegression(max_iter=1000)
+    lr = train_model(lr, 'Logistic Regression',
+                     X_train, y_train, X_test, y_test)
 
-    X_train.to_csv('X_train.csv', index=False)
+    rf = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=1)
+    rf = train_model(rf, 'Random Forest', X_train, y_train, X_test, y_test)
 
-    # lr = LogisticRegression(max_iter=1000)
-    # lr = train_model(lr, 'Logistic Regression',
-    #                  X_train, y_train, X_test, y_test)
+    xgboost = xgb.XGBClassifier(objective='multi:softmax', num_class=3)
+    xgboost = train_model(xgboost, 'XGBoost', X_train, y_train, X_test, y_test)
 
-    # rf = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=1)
-    # rf = train_model(rf, 'Random Forest', X_train, y_train, X_test, y_test)
+    catboost = CatBoostClassifier(
+        iterations=1000, depth=5, learning_rate=0.1, loss_function='MultiClass')
+    catboost.set_params(logging_level='Silent')
+    catboost = train_model(catboost, 'CatBoost', X_train,
+                           y_train, X_test, y_test)
 
-    # xgboost = xgb.XGBClassifier(objective='multi:softmax', num_class=3)
-    # xgboost = train_model(xgboost, 'XGBoost', X_train, y_train, X_test, y_test)
+    svm = SVC(kernel='linear')
+    svm = train_model(svm, 'SVM', X_train, y_train, X_test, y_test)
 
-    # catboost = CatBoostClassifier(
-    #     iterations=1000, depth=5, learning_rate=0.1, loss_function='MultiClass')
-    # catboost.set_params(logging_level='Silent')
-    # catboost = train_model(catboost, 'CatBoost', X_train,
-    #                        y_train, X_test, y_test)
+    mlp = MLPClassifier(hidden_layer_sizes=(100,), max_iter=500)
+    mlp = train_model(mlp, 'MLP Classifier', X_train, y_train, X_test, y_test)
 
-    # svm = SVC(kernel='linear')
-    # svm = train_model(svm, 'SVM', X_train, y_train, X_test, y_test)
+    adb = AdaBoostClassifier(n_estimators=100)
+    adb = train_model(adb, 'AdaBoost', X_train, y_train, X_test, y_test)

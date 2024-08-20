@@ -5,7 +5,6 @@ from utils.data_utils import Season
 
 API_KEY = "5949038c3c3fd7cf68cc60652121fa9e1aa460abc96871aee7a4ddabe097d87b"
 
-
 class APIClient:
     """Football data API client"""
 
