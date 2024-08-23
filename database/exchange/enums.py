@@ -4,7 +4,8 @@ from metadata import HorseRacingMetadataBuilder, FootballMetadataBuilder, Tennis
 
 class MarketFilters(Enum):
     # ^ - start of the string, $ - end of the string
-    FootballMarketRegex = r"(^MATCH_ODDS$)|(OVER)|(UNDER)|(_OU_)"
+    # FootballMarketRegex = r"(^MATCH_ODDS$)|(OVER)|(UNDER)|(_OU_)"
+    FootballMarketRegex = r"(^MATCH_ODDS$)"
     TennisMarketRegex = r"(^MATCH_ODDS$)"
     HorseRacingMarketRegex = r"(^WIN$)|(^EACH_WAY$)"
 
@@ -40,7 +41,7 @@ class Sport(Enum):
 
 
 class CountryFilters(Enum):
-    FootballCountryRegex = r".*"
+    FootballCountryRegex = r"(GB)"
     HorseRacingCountryRegex = r"(GB)|(IE)"
     TennisCountryRegex = r".*"
 
@@ -77,8 +78,8 @@ class Databases(Enum):
 
 
 class MongoURIs(Enum):
-    Test = "your_test_uri"
-    Serverless = "your_serverless_uri"
+    Test = "mongodb+srv://benschlagman:Neh6x0VGiCo1jnIX@bf-exchange-test-01.tfbzy1n.mongodb.net/?retryWrites=true&w=majority"
+    Serverless = "mongodb+srv://matyashuba:qXvE54CiMELUbUMi@bf-exchange-01.2h7jxvl.mongodb.net/?retryWrites=true&w=majority&appName=bf-exchange-01"
 
     def __str__(self):
         return self.value
@@ -88,9 +89,9 @@ class MongoURIs(Enum):
 
 
 class AWS(Enum):
-    Key = 'your_key'
-    Secret = 'your_secret'
-    Bucket = 'your_bucket'
+    Key = 'AKIAZXVKJEGNJYP2L2EC'
+    Secret = '8dQ/3upvJfUHo42WnZ5nQa/zb++rA8CCh4NRlkW2'
+    Bucket = 'historicdata-qst'
 
     def __str__(self):
         return self.value

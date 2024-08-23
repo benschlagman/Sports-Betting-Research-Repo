@@ -4,14 +4,18 @@ import numpy as np
 
 def preprocess_market_data(df):
     # Convert 'pt' to datetime format
-    df['publish_time'] = pd.to_datetime(df['pt'])
+    df['publish_time'] = pd.to_datetime(
+        df['pt'], errors='coerce', format='ISO8601')
 
     # Set the datetime as index for resampling
     df.set_index('publish_time', inplace=True)
+    df['id'] = df['id'].astype(str)
 
     # Pivot the DataFrame to ensure each runner's LTP is a separate column
-    df_pivot = df.pivot_table(index='publish_time', 
-                              values=['runner1_ltp', 'runner2_ltp', 'runner3_ltp'], 
+    df_pivot = df.pivot_table(index='publish_time',
+                                columns='id',
+                              values=['runner1_ltp',
+                                      'runner2_ltp', 'runner3_ltp'],
                               aggfunc='last')
 
     # Resample at a consistent interval (e.g., every 10 seconds)
@@ -19,9 +23,11 @@ def preprocess_market_data(df):
 
     return df_resampled
 
+
 def drop_na_rows(df):
     """Drop rows with NaN values."""
     return df.dropna()
+
 
 def remove_outliers(df):
     """Remove rows containing outliers based on the IQR method."""
