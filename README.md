@@ -3,7 +3,7 @@
 ## Overview
 This project investigates the application of deep learning to sports betting, specifically targeting online exchanges like Betfair. The work was conducted in collaboration with Quant Sports Trading (QST) and is structured around three core experiments. The project integrates various types of sports data — pre-game, in-play, and exchange data — to facilitate sophisticated model building and in-depth analysis in sports betting.
 
-The project’s research is organised into three experiments, detailed in Chapters 3, 4, and 5 of the thesis:
+The project’s research is organised into three experiments, detailed in Chapters 3, 4, and 5 of the MSc Machine Learning thesis titled 'Deep Learning for Algorithmic Sports Betting':
 
 - **Chapter 3 (Data Exploration and Infrastructure)**: Focuses on creating the research platform and database architecture, which is implemented in the `database` folder.
 - **Chapter 4 (Baseline Models for Pre-Game Football Predictions)**: Develops a series of baseline value betting models to classify the outcome of upcoming football matches based on historical pre-game data. The code for this is located in the `pre_game` folder.
@@ -57,7 +57,18 @@ Experiment 2 consists of a complete machine learning pipeline which utilises the
 
 By applying these steps, the models in Experiment 2 establish a robust foundation for predicting football match outcomes before they start, providing essential benchmarks for more complex in-play predictions.
 
-
 ## In-play
+
+Experiment 3 focuses on applying deep learning to in-play momentum betting, where predictions are made dynamically during live football matches. This experiment uses real-time exchange data to predict the Last Traded Price for each runner and assess game momentum to adjust betting strategies accordingly.
+
+### Key Components of In-Play Models:
+
+- **Real-time Data Integration**: The in-play models utilise live exchange data from Betfair to track the movement of odds.
+  
+- **Deep Learning Models**: Advanced deep learning architectures such as Long Short-Term Memory (LSTM) networks, attention-based transformers, and Convolutional Neural Networks (CNNs) are employed to identify shifts in match momentum. These models are designed to capture temporal patterns in both game data and market dynamics, enabling rapid in-play predictions.
+  
+- **Momentum Detection**: The models are trained to detect significant changes in match momentum, such as a team gaining or losing advantage. These changes are reflected in both the game data (e.g., possession, shots on goal) and the betting exchange, allowing for real-time adjustments to betting strategies.
+  
+The corresponding code for these models is located in the `in_play` folder. Each of the four models has its own notebook, located in `in_play/notebooks`, allowing for detailed experimentation and further refinement of in-play betting strategies.
 
 
