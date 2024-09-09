@@ -22,10 +22,10 @@ from main import main
 from exchange.enums import MarketFilters, CountryFilters, Databases, MongoURIs, MetaBuilder
 
 class DataPreprocessor:
-    def __init__(self, folder='Soccer/PRO/2023', uri=MongoURIs.Serverless, 
+    def __init__(self, folder='Soccer/PRO/2023/Jan', uri=MongoURIs.Serverless, 
                  market_filter=MarketFilters.FootballMarketRegex, meta_builder=MetaBuilder.Football, 
                  country_filter=CountryFilters.FootballCountryRegex, database=Databases.Football, 
-                 is_multiprocess=True, max_results=50):
+                 is_multiprocess=False, max_results=50):
         
         self.folder = folder
         self.uri = uri
