@@ -1,52 +1,52 @@
 import pandas as pd
 from category_encoders import OneHotEncoder
-from sklearn import preprocessing
+from sklearn.preprocessing import MinMaxScaler
 
-class XTableEncoder:
-    def __init__(self, X_table: pd.DataFrame):
-        self.X_table: pd.DataFrame = X_table
+class DataEncoder:
+    def __init__(self, data: pd.DataFrame):
+        self.data: pd.DataFrame = data
 
-    def encode(self) -> pd.DataFrame:
-        encoder = OneHotEncoder(cols=['HT', 'AT'], use_cat_names=True)
-        X_encoded = encoder.fit_transform(self.X_table)
-        X_encoded = X_encoded.apply(pd.to_numeric, errors='coerce')
-        self.X_encoded = X_encoded.reindex(sorted(X_encoded.columns), axis=1)
+    def one_hot_encode(self) -> pd.DataFrame:
+        ohe = OneHotEncoder(cols=['HT', 'AT'], use_cat_names=True)
+        encoded_data = ohe.fit_transform(self.data)
+        encoded_data = encoded_data.apply(pd.to_numeric, errors='coerce')
+        self.encoded_data = encoded_data.reindex(sorted(encoded_data.columns), axis=1)
 
-    def normalise(self):
-        min_max_scaler = preprocessing.MinMaxScaler()
-        X_scaled = min_max_scaler.fit_transform(self.X_encoded)
-        self.X_scaled = pd.DataFrame(X_scaled, columns=self.X_encoded.columns)
+    def normalize(self):
+        scaler = MinMaxScaler()
+        scaled_data = scaler.fit_transform(self.encoded_data)
+        self.scaled_data = pd.DataFrame(scaled_data, columns=self.encoded_data.columns)
 
-    def run(self):
-        self.encode()
-        self.normalise()
-        return self.X_scaled
-    
+    def process(self):
+        self.one_hot_encode()
+        self.normalize()
+        return self.scaled_data
 
-class YSeriesEncoder:
-    def __init__(self, y_series: pd.Series):
-        self.y_series: pd.Series = y_series
 
-    def run(self) -> pd.Series:
-        class_mapping = {'H': 0, 'A': 1, 'D': 2}
-        return self.y_series.map(class_mapping)
-    
+class TargetMapper:
+    def __init__(self, target: pd.Series):
+        self.target: pd.Series = target
 
-class CrossChecker:
-    def __init__(self, X_train_encoded: pd.DataFrame, X_test_encoded: pd.DataFrame):
-        self.X_train_encoded: pd.DataFrame = X_train_encoded
-        self.X_test_encoded: pd.DataFrame = X_test_encoded
+    def encode_labels(self) -> pd.Series:
+        label_mapping = {'H': 0, 'A': 1, 'D': 2}
+        return self.target.map(label_mapping)
 
-    def run(self):
-        diff1 = set(self.X_test_encoded.columns) - set(self.X_train_encoded.columns)
-        diff2 = set(self.X_train_encoded.columns) - set(self.X_test_encoded.columns)
 
-        for col in diff1:
-            self.X_train_encoded[col] = 0
-        for col in diff2:
-            self.X_test_encoded[col] = 0
+class DataAligner:
+    def __init__(self, train_data: pd.DataFrame, test_data: pd.DataFrame):
+        self.train_data: pd.DataFrame = train_data
+        self.test_data: pd.DataFrame = test_data
 
-        # self.X_encoded = X_encoded.reindex(sorted(X_encoded.columns), axis=1)
-        self.X_train_encoded = self.X_train_encoded.reindex(sorted(self.X_train_encoded.columns), axis=1)
-        self.X_test_encoded = self.X_test_encoded.reindex(sorted(self.X_test_encoded.columns), axis=1)
-        return self.X_train_encoded, self.X_test_encoded
+    def align_columns(self):
+        train_only_cols = set(self.train_data.columns) - set(self.test_data.columns)
+        test_only_cols = set(self.test_data.columns) - set(self.train_data.columns)
+
+        for col in train_only_cols:
+            self.test_data[col] = 0
+        for col in test_only_cols:
+            self.train_data[col] = 0
+
+        self.train_data = self.train_data.reindex(sorted(self.train_data.columns), axis=1)
+        self.test_data = self.test_data.reindex(sorted(self.test_data.columns), axis=1)
+        
+        return self.train_data, self.test_data

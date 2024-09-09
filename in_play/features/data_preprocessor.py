@@ -28,12 +28,13 @@ def drop_na_rows(df):
     """Drop rows with NaN values."""
     return df.dropna()
 
-
 def remove_outliers(df):
-    """Remove rows containing outliers based on the IQR method."""
-    Q1 = df.quantile(0.25)
-    Q3 = df.quantile(0.75)
-    IQR = Q3 - Q1
-    lower_bound = Q1 - 1.5 * IQR
-    upper_bound = Q3 + 1.5 * IQR
-    return df[((df >= lower_bound) & (df <= upper_bound)).all(axis=1)]
+    """Remove rows with outlier values using the IQR (Interquartile Range) method."""
+    first_quartile = df.quantile(0.25)
+    third_quartile = df.quantile(0.75)
+    interquartile_range = third_quartile - first_quartile
+
+    lower_limit = first_quartile - 1.5 * interquartile_range
+    upper_limit = third_quartile + 1.5 * interquartile_range
+
+    return df[((df >= lower_limit) & (df <= upper_limit)).all(axis=1)]
