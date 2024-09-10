@@ -18,7 +18,7 @@ from models.cnn import CNN
 sys.path.append('../../database')
 sys.path.append('../../database/exchange')
 sys.path.append('../../database/interface')
-from main import main  
+from main import main_exp3 as main
 from exchange.enums import MarketFilters, CountryFilters, Databases, MongoURIs, MetaBuilder
 
 class DataPreprocessor:
