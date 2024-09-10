@@ -2,8 +2,8 @@ import pandas as pd
 
 from utils.model_utils import Feature
 from data.process import DataProcessor, DataSet
-from pipeline.X_table_constructor import XTrainConstructor, XTestConstructor
-from pipeline.pre_processer import XTableEncoder, YSeriesEncoder, CrossChecker
+from pre_game.pipeline.data_processer import XTrainConstructor, XTestConstructor
+from pipeline.pre_processer import DataEncoder, TargetMapper, DataAligner
 
 import xgboost as xgb
 from sklearn.svm import SVC
@@ -68,15 +68,15 @@ def pre_process_data(df) -> tuple[DataSet, DataSet, list[str]]:
 def feature_engineering(train: DataSet, test: DataSet, unique_teams, feature_params):
     X_train = XTrainConstructor(
         train.X, unique_teams, **feature_params).construct_table()
-    X_train = XTableEncoder(X_train).run()
-    y_train = YSeriesEncoder(train.y).run()
+    X_train = DataEncoder(X_train).run()
+    y_train = TargetMapper(train.y).run()
 
     X_test = XTestConstructor(
         test.X, train.X, unique_teams, **feature_params).construct_table()
-    X_test = XTableEncoder(X_test).run()
-    y_test = YSeriesEncoder(test.y).run()
+    X_test = DataEncoder(X_test).run()
+    y_test = TargetMapper(test.y).run()
 
-    X_train, X_test = CrossChecker(X_train, X_test).run()
+    X_train, X_test = DataAligner(X_train, X_test).run()
 
     return X_train, y_train, X_test, y_test
 

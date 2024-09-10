@@ -78,8 +78,8 @@ class Databases(Enum):
 
 
 class MongoURIs(Enum):
-    Test = "mongodb+srv://benschlagman:Neh6x0VGiCo1jnIX@bf-exchange-test-01.tfbzy1n.mongodb.net/?retryWrites=true&w=majority"
-    Serverless = "mongodb+srv://matyashuba:qXvE54CiMELUbUMi@bf-exchange-01.2h7jxvl.mongodb.net/?retryWrites=true&w=majority&appName=bf-exchange-01"
+    Test = "mongodb+srv://username:password@bf-exchange-test-01.tfbzy1n.mongodb.net/?retryWrites=true&w=majority"
+    Serverless = "mongodb+srv://username:password@bf-exchange-01.2h7jxvl.mongodb.net/?retryWrites=true&w=majority&appName=bf-exchange-01"
 
     def __str__(self):
         return self.value
@@ -89,9 +89,9 @@ class MongoURIs(Enum):
 
 
 class AWS(Enum):
-    Key = 'AKIAZXVKJEGNJYP2L2EC'
-    Secret = '8dQ/3upvJfUHo42WnZ5nQa/zb++rA8CCh4NRlkW2'
-    Bucket = 'historicdata-qst'
+    Key = 'your_aws_access_key'
+    Secret = 'your_aws_secret_key'
+    Bucket = 'your_s3_bucket_name'
 
     def __str__(self):
         return self.value
