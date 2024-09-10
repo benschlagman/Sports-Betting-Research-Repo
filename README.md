@@ -59,10 +59,11 @@ The `pre_game` folder contains the necessary components for running the pre-game
 
 - **notebooks**: Contains Jupyter notebooks for running the pre-game models.
   - `model.ipynb`: Main notebook for running the pre-game prediction models.
+  - `data.ipynb`: Various data visualisations
 
 - **pipeline**: Includes scripts for constructing the data pipeline.
   - `pre_processer.py`: Handles data pre-processing.
-  - `x_table_constructor.py`: Manages table construction for model input.
+  - `data_processer.py`: Manages table construction for model input.
 
 ### Key Aspects of Data Preparation Include:
 
