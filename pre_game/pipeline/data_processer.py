@@ -5,71 +5,100 @@ import json
 
 
 class XTableConstructor:
+    """
+    A class to construct a feature table (X) for machine learning models from football match statistics.
+    Allows for selecting specific features to be included in the table.
+    """
     def __init__(self, **kwargs):
-        self.is_goal_stats: bool = kwargs.get(Feature.GOAL_STATS.value, False)
-        self.is_shooting_stats: bool = kwargs.get(
-            Feature.SHOOTING_STATS.value, False)
-        self.is_possession_stats: bool = kwargs.get(
-            Feature.POSSESSION_STATS.value, False)
-        self.is_result: bool = kwargs.get(Feature.RESULT.value, False)
-        self.is_odds: bool = kwargs.get(Feature.ODDS.value, False)
-        self.is_xg: bool = kwargs.get(Feature.XG.value, False)
-        self.is_home_away_results: bool = kwargs.get(
-            Feature.HOME_AWAY_RESULTS.value, False)
-        self.is_conceded_stats: bool = kwargs.get(
-            Feature.CONCEDED_STATS.value, False)
-        self.is_last_n_matches: bool = kwargs.get(
-            Feature.LAST_N_MATCHES.value, False)
-        self.is_win_streak: bool = kwargs.get(Feature.WIN_STREAK.value, False)
+        # Initialise boolean flags for each feature type based on keyword arguments
+        self.include_goal_stats: bool = kwargs.get(Feature.GOAL_STATS.value, False)
+        self.include_shooting_stats: bool = kwargs.get(Feature.SHOOTING_STATS.value, False)
+        self.include_possession_stats: bool = kwargs.get(Feature.POSSESSION_STATS.value, False)
+        self.include_result: bool = kwargs.get(Feature.RESULT.value, False)
+        self.include_odds: bool = kwargs.get(Feature.ODDS.value, False)
+        self.include_xg: bool = kwargs.get(Feature.XG.value, False)
+        self.include_home_away_results: bool = kwargs.get(Feature.HOME_AWAY_RESULTS.value, False)
+        self.include_conceded_stats: bool = kwargs.get(Feature.CONCEDED_STATS.value, False)
+        self.include_last_n_matches: bool = kwargs.get(Feature.LAST_N_MATCHES.value, False)
+        self.include_win_streak: bool = kwargs.get(Feature.WIN_STREAK.value, False)
 
-    def construct_row(self, original_row, home_team, away_team, home_team_stats, away_team_stats) -> dict:
+    def construct_row(self, match_row, home_team, away_team, home_team_stats, away_team_stats) -> dict:
+        """
+        Constructs a single row of feature values for a given match, based on the specified team stats.
+
+        Parameters:
+        match_row (Series): Original row from the match data.
+        home_team (str): Name of the home team.
+        away_team (str): Name of the away team.
+        home_team_stats (DataFrame): Statistics for the home team.
+        away_team_stats (DataFrame): Statistics for the away team.
+
+        Returns:
+        dict: A dictionary representing the feature row for the match.
+        """
         row = {
             'HT': home_team,
             'AT': away_team,
         }
 
-        if self.is_result:
-            row = self.add_result_percentage(
-                row, home_team_stats, away_team_stats)
+        if self.include_result:
+            row = self.add_result_percentage(row, home_team_stats, away_team_stats)
 
-        if self.is_possession_stats:
-            row = self.add_possession_stats(
-                row, home_team_stats, away_team_stats)
+        if self.include_possession_stats:
+            row = self.add_possession_stats(row, home_team_stats, away_team_stats)
 
-        if self.is_home_away_results:
-            row = self.add_home_away_result_percentage(
-                row, home_team_stats, away_team_stats)
+        if self.include_home_away_results:
+            row = self.add_home_away_result_percentage(row, home_team_stats, away_team_stats)
 
-        if self.is_shooting_stats:
-            row = self.add_shooting_stats(
-                row, home_team_stats, away_team_stats)
+        if self.include_shooting_stats:
+            row = self.add_shooting_stats(row, home_team_stats, away_team_stats)
 
-        if self.is_goal_stats:
+        if self.include_goal_stats:
             row = self.add_goal_stats(row, home_team_stats, away_team_stats)
 
-        if self.is_conceded_stats:
-            row = self.add_conceded_stats(
-                row, home_team_stats, away_team_stats)
+        if self.include_conceded_stats:
+            row = self.add_conceded_stats(row, home_team_stats, away_team_stats)
 
-        if self.is_last_n_matches:
-            row = self.add_last_n_matches_stats(
-                row, home_team_stats, away_team_stats)
+        if self.include_last_n_matches:
+            row = self.add_last_n_matches_stats(row, home_team_stats, away_team_stats)
 
-        if self.is_win_streak:
+        if self.include_win_streak:
             row = self.add_win_streak(row, home_team_stats, away_team_stats)
 
-        if self.is_odds:
-            row = self.add_odds(row, original_row)
+        if self.include_odds:
+            row = self.add_odds(row, match_row)
 
-        if self.is_xg:
-            row = self.add_xg(row, original_row)
+        if self.include_xg:
+            row = self.add_xg(row, match_row)
 
         return row
 
-    def divide(self, x_dict, y_dict, x_label, y_label):
-        return x_dict[x_label].values[0] / y_dict[y_label].values[0] if y_dict[y_label].values[0] != 0 else 0
+    def divide(self, stat_dict_1, stat_dict_2, label_1, label_2):
+        """
+        Safely divides values from two dictionaries, returns 0 if division by zero.
+
+        Parameters:
+        stat_dict_1 (dict): First dictionary containing statistics.
+        stat_dict_2 (dict): Second dictionary containing statistics.
+        label_1 (str): Key to extract from stat_dict_1.
+        label_2 (str): Key to extract from stat_dict_2.
+
+        Returns:
+        float: Result of the division, or 0 if division by zero occurs.
+        """
+        return stat_dict_1[label_1].values[0] / stat_dict_2[label_2].values[0] if stat_dict_2[label_2].values[0] != 0 else 0
 
     def get_value(self, df, column):
+        """
+        Safely retrieves a value from a DataFrame column.
+
+        Parameters:
+        df (DataFrame): The DataFrame to extract from.
+        column (str): The column name to retrieve.
+
+        Returns:
+        value: Value from the column or 0 if the DataFrame is empty.
+        """
         return df[column].values[0] if not df.empty else 0
 
     def add_result_percentage(self, row, home_team_stats, away_team_stats):
@@ -183,63 +212,83 @@ class XTableConstructor:
 
 
 class XTestConstructor(XTableConstructor):
-    def __init__(self, df_test, df_train, unique_teams, **kwargs):
+    """
+    Constructs a feature table (X_test) for the test set, using historical training data to compute team stats.
+    """
+    def __init__(self, df_test, df_train, team_list, **kwargs):
         super().__init__(**kwargs)
-        self.df_test: pd.DataFrame = df_test
-        self.df_train: pd.DataFrame = df_train
-        self.X_test: pd.DataFrame = pd.DataFrame()
-        self.unique_teams: list[str] = unique_teams
+        self.test_data: pd.DataFrame = df_test
+        self.train_data: pd.DataFrame = df_train
+        self.X_test_table: pd.DataFrame = pd.DataFrame()
+        self.team_list: list[str] = team_list
 
-        self.individual_stats = IndividualTeamStats(
-            self.df_train, self.unique_teams).compute()
+        # Compute individual team stats using the training data
+        self.team_stats_calculator = IndividualTeamStats(self.train_data, self.team_list).compute()
 
     def construct_table(self) -> pd.DataFrame:
-        for _, row in self.df_test.iterrows():
-            home_team = row['HomeTeam']
-            away_team = row['AwayTeam']
+        """
+        Constructs the test feature table by iterating over each row in the test set.
 
-            home_team_stats = self.individual_stats.loc[self.individual_stats['Team'] == home_team]
-            away_team_stats = self.individual_stats.loc[self.individual_stats['Team'] == away_team]
+        Returns:
+        DataFrame: The constructed test feature table.
+        """
+        for _, match_row in self.test_data.iterrows():
+            home_team = match_row['HomeTeam']
+            away_team = match_row['AwayTeam']
 
-            row: dict = self.construct_row(row, home_team, away_team, home_team_stats, away_team_stats)
-            self.X_test = self.X_test._append(row, ignore_index=True)
+            home_team_stats = self.team_stats_calculator.loc[self.team_stats_calculator['Team'] == home_team]
+            away_team_stats = self.team_stats_calculator.loc[self.team_stats_calculator['Team'] == away_team]
 
-        return self.X_test
+            feature_row: dict = self.construct_row(match_row, home_team, away_team, home_team_stats, away_team_stats)
+            self.X_test_table = self.X_test_table._append(feature_row, ignore_index=True)
+
+        return self.X_test_table
 
 
 class XTrainConstructor(XTableConstructor):
-    def __init__(self, df_train, unique_teams, **kwargs):
+    """
+    Constructs a feature table (X_train) for the training set, using historical data to compute team stats.
+    """
+    def __init__(self, df_train, team_list, **kwargs):
         super().__init__(**kwargs)
 
-        self.df_train: pd.DataFrame = df_train
-        self.unique_teams: list[str] = unique_teams
-        self.X_train: pd.DataFrame = pd.DataFrame()
+        self.train_data: pd.DataFrame = df_train
+        self.team_list: list[str] = team_list
+        self.X_train_table: pd.DataFrame = pd.DataFrame()
 
     def construct_table(self) -> pd.DataFrame:
-        individual_stats_manager = IndividualTeamStats(
-            self.df_train, self.unique_teams)
-        # pairwise_stats_manager = PairwiseTeamStats(self.df, self.unique_teams, individual_stats_manager.generate_features_dataframe())
+        """
+        Constructs the training feature table by iterating over each row in the training set.
 
-        for _, row in self.df_train.iterrows():
+        Returns:
+        DataFrame: The constructed training feature table.
+        """
+        individual_stats_manager = IndividualTeamStats(self.train_data, self.team_list)
 
-            # Iterative implementation
-    
-            individual_stats = self.update_individual_stats(
-                row, individual_stats_manager)
+        for _, match_row in self.train_data.iterrows():
+            individual_stats = self.update_individual_stats(match_row, individual_stats_manager)
 
-            home_team = row['HomeTeam']
-            away_team = row['AwayTeam']
+            home_team = match_row['HomeTeam']
+            away_team = match_row['AwayTeam']
 
             home_team_stats = individual_stats.loc[individual_stats['Team'] == home_team]
             away_team_stats = individual_stats.loc[individual_stats['Team'] == away_team]
 
-    
+            feature_row: dict = self.construct_row(match_row, home_team, away_team, home_team_stats, away_team_stats)
+            self.X_train_table = self.X_train_table._append(feature_row, ignore_index=True)
 
-            row: dict = self.construct_row(row, home_team, away_team, home_team_stats, away_team_stats)
-            self.X_train = self.X_train._append(row, ignore_index=True)
+        return self.X_train_table
 
-        return self.X_train
+    def update_individual_stats(self, match_row, stats_manager: IndividualTeamStats) -> pd.DataFrame:
+        """
+        Updates individual team stats for a given match row.
 
-    def update_individual_stats(self, row, individual_stats_manager: IndividualTeamStats) -> pd.DataFrame:
-        individual_stats_manager.compute_team_stats(row)
-        return individual_stats_manager.generate_features_dataframe()
+        Parameters:
+        match_row (Series): Row of match data.
+        stats_manager (IndividualTeamStats): Manager for computing team stats.
+
+        Returns:
+        DataFrame: Updated DataFrame with new stats.
+        """
+        stats_manager.compute_team_stats(match_row)
+        return stats_manager.generate_features_dataframe()

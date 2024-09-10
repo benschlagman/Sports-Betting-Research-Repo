@@ -1,5 +1,3 @@
-
-
 from features.data_preprocessor import preprocess_market_data, drop_na_rows, remove_outliers
 from features.feature_engineering import calculate_macd, calculate_moving_average, calculate_roc
 import numpy as np
@@ -10,16 +8,27 @@ from sklearn.preprocessing import MinMaxScaler
 import sys
 sys.path.append('..')
 
+def process_multiple_markets(match_data_list, sequence_length=10, val_ratio=0.15, test_ratio=0.1):
+    """
+    Processes multiple matches' data, creating training, validation, and test sets for each match.
 
-def process_multiple_markets(df_per_match, sequence_length=10, val_ratio=0.15, test_ratio=0.1):
+    Parameters:
+    match_data_list (list): List of DataFrames, each containing data for a match.
+    sequence_length (int): Length of the sequences for LSTM.
+    val_ratio (float): Ratio of validation data.
+    test_ratio (float): Ratio of test data.
+
+    Returns:
+    tuple: Processed data arrays for training, validation, and testing.
+    """
     all_sequences_train, all_labels_train = [], []
     all_sequences_val, all_labels_val = [], []
     all_sequences_test, all_labels_test = [], []
 
-    for df in df_per_match:
-        # Process each match's DataFrame
+    # Process each match's DataFrame
+    for match_df in match_data_list:
         sequences_train, labels_train, sequences_val, labels_val, sequences_test, labels_test = process_single_market(
-            df, sequence_length, val_ratio, test_ratio)
+            match_df, sequence_length, val_ratio, test_ratio)
 
         # Append the results to the corresponding lists
         all_sequences_train.append(sequences_train)
@@ -29,7 +38,7 @@ def process_multiple_markets(df_per_match, sequence_length=10, val_ratio=0.15, t
         all_sequences_test.append(sequences_test)
         all_labels_test.append(labels_test)
 
-    # Combine all matches' data into single arrays
+    # Combine data from all matches into single arrays
     X_train = np.concatenate(all_sequences_train)
     y_train = np.concatenate(all_labels_train)
     X_val = np.concatenate(all_sequences_val)
@@ -40,35 +49,51 @@ def process_multiple_markets(df_per_match, sequence_length=10, val_ratio=0.15, t
     return X_train, y_train, X_val, y_val, X_test, y_test
 
 
-def process_single_market(df, sequence_length=10, val_ratio=0.15, test_ratio=0.1):
-    # Preprocess the dataframe
-    processed_df = preprocess_market_data(df)
-    processed_cleaned_df = drop_na_rows(processed_df)
+def process_single_market(match_df, sequence_length=10, val_ratio=0.15, test_ratio=0.1):
+    """
+    Processes a single match's data to create sequences and perform train-test-validation split.
 
-    # Calculate synthetic features
-    roc = calculate_roc(processed_cleaned_df)
-    ma = calculate_moving_average(processed_cleaned_df)
-    macd, signal = calculate_macd(processed_cleaned_df)
-    processed_cleaned_df = remove_outliers(processed_cleaned_df)
+    Parameters:
+    match_df (DataFrame): DataFrame containing market data for a single match.
+    sequence_length (int): Length of sequences for LSTM.
+    val_ratio (float): Ratio of validation data.
+    test_ratio (float): Ratio of test data.
 
-    # Combine the features into a single dataframe
-    features_df = pd.concat([processed_cleaned_df,
+    Returns:
+    tuple: Training, validation, and testing sequences and labels.
+    """
+    # Preprocess the DataFrame
+    processed_df = preprocess_market_data(match_df)
+    cleaned_df = drop_na_rows(processed_df)
+
+    # Generate synthetic features (ROC, moving averages, MACD, signal line)
+    roc = calculate_roc(cleaned_df)
+    moving_avg = calculate_moving_average(cleaned_df)
+    macd_line, signal_line = calculate_macd(cleaned_df)
+
+    # Remove outliers from the cleaned DataFrame
+    cleaned_df = remove_outliers(cleaned_df)
+
+    # Combine the features into a single DataFrame
+    features_df = pd.concat([cleaned_df,
                              roc.add_suffix('_roc'),
-                             ma.add_suffix('_ma'),
-                             macd.add_suffix('_macd'),
-                             signal.add_suffix('_signal')], axis=1)
+                             moving_avg.add_suffix('_ma'),
+                             macd_line.add_suffix('_macd'),
+                             signal_line.add_suffix('_signal')], axis=1)
+    
+    # Drop any rows with missing values in the combined DataFrame
     features_df = drop_na_rows(features_df)
 
-    # Normalization (optional)
+    # Normalization (scaling all features to the range [0, 1])
     scaler = MinMaxScaler()
-    features_df = pd.DataFrame(scaler.fit_transform(features_df),
-                               index=features_df.index,
-                               columns=features_df.columns)
+    normalized_features_df = pd.DataFrame(scaler.fit_transform(features_df),
+                                          index=features_df.index,
+                                          columns=features_df.columns)
 
-    # Create sequences for LSTM
-    sequences, labels = create_sequences(features_df, sequence_length)
+    # Create sequences for LSTM (input features) and labels
+    sequences, labels = create_sequences(normalized_features_df, sequence_length)
 
-    # Train-Val-Test split
+    # Split data into train, validation, and test sets
     sequences_train_val, sequences_test, labels_train_val, labels_test = train_test_split(
         sequences, labels, test_size=test_ratio, shuffle=False)
 
@@ -79,30 +104,52 @@ def process_single_market(df, sequence_length=10, val_ratio=0.15, test_ratio=0.1
 
 
 def create_sequences(data, sequence_length=64):
+    """
+    Creates sequences and corresponding labels for LSTM.
+
+    Parameters:
+    data (DataFrame): The input data.
+    sequence_length (int): The length of each sequence.
+
+    Returns:
+    tuple: Sequences of data and corresponding labels (LTPs of the 3 runners).
+    """
     sequences = []
     labels = []
 
     # Loop through the data to create sequences
     for i in range(sequence_length, len(data)):
         # Extract sequences and corresponding labels
-        seq = data.iloc[i-sequence_length:i].values
+        sequence_data = data.iloc[i-sequence_length:i].values
         # Assuming the first 3 columns are the LTPs for the 3 runners
-        label = data.iloc[i, :3].values
-        sequences.append(seq)
-        labels.append(label)
+        sequence_label = data.iloc[i, :3].values
+        sequences.append(sequence_data)
+        labels.append(sequence_label)
 
     return np.array(sequences), np.array(labels)
 
 
-def process_multiple_markets_cnn(df_per_match, sequence_length=10, val_ratio=0.15, test_ratio=0.1):
+def process_multiple_markets_cnn(match_data_list, sequence_length=10, val_ratio=0.15, test_ratio=0.1):
+    """
+    Processes multiple matches' data to create training, validation, and test sets for CNN.
+
+    Parameters:
+    match_data_list (list): List of DataFrames, each containing data for a match.
+    sequence_length (int): Length of the sequences.
+    val_ratio (float): Ratio of validation data.
+    test_ratio (float): Ratio of test data.
+
+    Returns:
+    tuple: Processed data arrays for training, validation, and testing.
+    """
     all_sequences_train, all_labels_train = [], []
     all_sequences_val, all_labels_val = [], []
     all_sequences_test, all_labels_test = [], []
 
-    for df in df_per_match:
-        # Process each match's DataFrame
+    # Process each match's DataFrame
+    for match_df in match_data_list:
         sequences_train, labels_train, sequences_val, labels_val, sequences_test, labels_test = process_single_market_cnn(
-            df, sequence_length, val_ratio, test_ratio)
+            match_df, sequence_length, val_ratio, test_ratio)
 
         # Append the results to the corresponding lists
         all_sequences_train.append(sequences_train)
@@ -112,7 +159,7 @@ def process_multiple_markets_cnn(df_per_match, sequence_length=10, val_ratio=0.1
         all_sequences_test.append(sequences_test)
         all_labels_test.append(labels_test)
 
-    # Combine all matches' data into single arrays
+    # Combine data from all matches into single arrays
     X_train = np.concatenate(all_sequences_train)
     y_train = np.concatenate(all_labels_train)
     X_val = np.concatenate(all_sequences_val)
@@ -123,33 +170,49 @@ def process_multiple_markets_cnn(df_per_match, sequence_length=10, val_ratio=0.1
     return X_train, y_train, X_val, y_val, X_test, y_test
 
 
-def process_single_market_cnn(df, sequence_length=10, val_ratio=0.15, test_ratio=0.1):
-    # Preprocess the dataframe
-    processed_df = preprocess_market_data(df)
-    processed_cleaned_df = drop_na_rows(processed_df)
+def process_single_market_cnn(match_df, sequence_length=10, val_ratio=0.15, test_ratio=0.1):
+    """
+    Processes a single match's data for CNN, performs feature engineering, and splits into train, validation, and test sets.
 
-    # Calculate synthetic features
-    roc = calculate_roc(processed_cleaned_df)
-    ma = calculate_moving_average(processed_cleaned_df)
-    macd, signal = calculate_macd(processed_cleaned_df)
-    processed_cleaned_df = remove_outliers(processed_cleaned_df)
+    Parameters:
+    match_df (DataFrame): DataFrame containing market data for a single match.
+    sequence_length (int): Length of sequences for CNN.
+    val_ratio (float): Ratio of validation data.
+    test_ratio (float): Ratio of test data.
 
-    # Combine the features into a single dataframe
-    features_df = pd.concat([processed_cleaned_df,
+    Returns:
+    tuple: Training, validation, and testing sequences and labels.
+    """
+    # Preprocess the DataFrame
+    processed_df = preprocess_market_data(match_df)
+    cleaned_df = drop_na_rows(processed_df)
+
+    # Generate synthetic features (ROC, moving averages, MACD, signal line)
+    roc = calculate_roc(cleaned_df)
+    moving_avg = calculate_moving_average(cleaned_df)
+    macd_line, signal_line = calculate_macd(cleaned_df)
+
+    # Remove outliers from the cleaned DataFrame
+    cleaned_df = remove_outliers(cleaned_df)
+
+    # Combine the features into a single DataFrame
+    features_df = pd.concat([cleaned_df,
                              roc.add_suffix('_roc'),
-                             ma.add_suffix('_ma'),
-                             macd.add_suffix('_macd'),
-                             signal.add_suffix('_signal')], axis=1)
+                             moving_avg.add_suffix('_ma'),
+                             macd_line.add_suffix('_macd'),
+                             signal_line.add_suffix('_signal')], axis=1)
+    
+    # Drop any rows with missing values
     features_df = drop_na_rows(features_df)
 
-    # Normalization (optional)
+    # Normalize the features using MinMaxScaler
     scaler = MinMaxScaler()
-    features_df = pd.DataFrame(scaler.fit_transform(features_df),
-                               index=features_df.index,
-                               columns=features_df.columns)
+    normalized_features_df = pd.DataFrame(scaler.fit_transform(features_df),
+                                          index=features_df.index,
+                                          columns=features_df.columns)
 
-    # Create sequences for LSTM
-    sequences, labels = create_sequences_cnn(features_df, sequence_length)
+    # Create sequences for CNN (input features) and labels
+    sequences, labels = create_sequences_cnn(normalized_features_df, sequence_length)
 
     # Train-Val-Test split
     sequences_train_val, sequences_test, labels_train_val, labels_test = train_test_split(
@@ -162,6 +225,17 @@ def process_single_market_cnn(df, sequence_length=10, val_ratio=0.15, test_ratio
 
 
 def create_sequences_cnn(data, sequence_length=10, roc_threshold=0.01):
+    """
+    Creates sequences and labels for CNN based on the rate of change (ROC).
+
+    Parameters:
+    data (DataFrame): The input data.
+    sequence_length (int): The length of each sequence.
+    roc_threshold (float): Threshold to classify the ROC.
+
+    Returns:
+    tuple: Sequences of data and corresponding labels based on ROC.
+    """
     sequences = []
     labels = []
 
@@ -169,18 +243,15 @@ def create_sequences_cnn(data, sequence_length=10, roc_threshold=0.01):
     ltp_columns = data.columns[:3]
 
     for i in range(sequence_length, len(data) - 1):
-        seq = data.iloc[i-sequence_length:i].values
+        sequence_data = data.iloc[i-sequence_length:i].values
 
         # Calculate the rate of change between current LTP and LTP 'sequence_length' steps ago
-        roc = (data[ltp_columns].iloc[i] - data[ltp_columns].iloc[i-sequence_length]) / data[ltp_columns].iloc[i-sequence_length]
+        roc_change = (data[ltp_columns].iloc[i] - data[ltp_columns].iloc[i-sequence_length]) / data[ltp_columns].iloc[i-sequence_length]
 
         # Classify RoC: 1 for positive, 0 for negative or neutral
-        label = np.where(roc > roc_threshold, 1, 0)
+        sequence_label = np.where(roc_change > roc_threshold, 1, 0)
 
-        sequences.append(seq)
-        labels.append(label)
+        sequences.append(sequence_data)
+        labels.append(sequence_label)
 
     return np.array(sequences), np.array(labels)
-
-
-

@@ -1,95 +1,112 @@
-import pandas as pd
-
-
 class IndividualTeamStats:
-    def __init__(self, df: pd.DataFrame, unique_teams: list[str], last_n_matches=6):
-        self.df = df
-        self.reversed_df = self.df.iloc[::-1]
-        self.unique_teams = unique_teams
-        self.last_n_matches = last_n_matches
+    """
+    This class computes and stores individual team statistics for football matches, including wins, losses,
+    goals, fouls, cards, possession, and other team-specific performance metrics.
+    """
+    def __init__(self, match_data: pd.DataFrame, team_list: list[str], num_last_matches=6):
+        """
+        Initialises the class with match data, a list of unique teams, and the number of last matches to consider.
 
-        self.team_wins = self.init_teams_dict()
-        self.team_fouls = self.init_teams_dict()
-        self.team_draws = self.init_teams_dict()
-        self.team_goals = self.init_teams_dict()
-        self.team_losses = self.init_teams_dict()
-        self.team_seasons = self.init_teams_set()
-        self.team_corners = self.init_teams_dict()
-        self.team_conceded = self.init_teams_dict()
-        self.team_red_cards = self.init_teams_dict()
-        self.team_home_wins = self.init_teams_dict()
-        self.team_away_wins = self.init_teams_dict()
-        self.team_possession = self.init_teams_dict()
-        self.team_win_streak = self.init_teams_dict()
-        self.team_home_draws = self.init_teams_dict()
-        self.team_away_draws = self.init_teams_dict()
-        self.team_home_losses = self.init_teams_dict()
-        self.team_away_losses = self.init_teams_dict()
-        self.team_yellow_cards = self.init_teams_dict()
+        Parameters:
+        match_data (DataFrame): The match dataset containing all relevant match statistics.
+        team_list (list[str]): A list of unique team names.
+        num_last_matches (int): The number of last matches to track for specific metrics (default is 6).
+        """
+        self.match_data = match_data
+        self.reverse_data = self.match_data.iloc[::-1]  # Reverse the DataFrame to work with latest matches first
+        self.team_list = team_list
+        self.num_last_matches = num_last_matches
+
+        # Initialise dictionaries to store team-specific statistics
+        self.team_win_counts = self.init_teams_dict()
+        self.team_foul_counts = self.init_teams_dict()
+        self.team_draw_counts = self.init_teams_dict()
+        self.team_goal_counts = self.init_teams_dict()
+        self.team_loss_counts = self.init_teams_dict()
+        self.team_seasons_played = self.init_teams_set()
+        self.team_corner_counts = self.init_teams_dict()
+        self.team_conceded_goals = self.init_teams_dict()
+        self.team_red_card_counts = self.init_teams_dict()
+        self.team_home_win_counts = self.init_teams_dict()
+        self.team_away_win_counts = self.init_teams_dict()
+        self.team_possession_stats = self.init_teams_dict()
+        self.team_win_streaks = self.init_teams_dict()
+        self.team_home_draw_counts = self.init_teams_dict()
+        self.team_away_draw_counts = self.init_teams_dict()
+        self.team_home_loss_counts = self.init_teams_dict()
+        self.team_away_loss_counts = self.init_teams_dict()
+        self.team_yellow_card_counts = self.init_teams_dict()
         self.team_shots_on_goal = self.init_teams_dict()
         self.team_shots_on_target = self.init_teams_dict()
-        self.team_half_time_goals = self.init_teams_dict()
-        self.team_last_n_matches_goals = self.init_teams_dict_with_list()
-        self.team_last_n_matches_goal_diff = self.init_teams_dict_with_list()
+        self.team_ht_goal_counts = self.init_teams_dict()
+        self.team_last_n_goals = self.init_teams_dict_with_list()
+        self.team_last_n_goal_diffs = self.init_teams_dict_with_list()
 
     def init_teams_dict(self) -> dict:
-        return {team: 0 for team in self.unique_teams}
+        """Initialises a dictionary for each team with zero values for integer-based statistics."""
+        return {team: 0 for team in self.team_list}
     
     def init_teams_set(self) -> dict:
-        return {team: set() for team in self.unique_teams}
+        """Initialises a dictionary for each team with empty sets for tracking unique values, such as seasons."""
+        return {team: set() for team in self.team_list}
     
     def init_teams_dict_with_list(self) -> dict:
-        return {team: [] for team in self.unique_teams}
+        """Initialises a dictionary for each team with empty lists for tracking recent match statistics."""
+        return {team: [] for team in self.team_list}
     
-    def compute_team_stats(self, row):
-        self.update_results(row)
-        self.update_home_away_results(row)
-        self.update_win_streak(row)
-        self.update_goals(row)
-        self.update_conceded_goals(row)
-        self.update_half_time_goals(row)
-        self.update_shots_on_goal(row)
-        self.update_shots_on_target(row)
-        self.update_yellow_cards(row)
-        self.update_red_cards(row)
-        self.update_corners(row)
-        self.update_posession(row)
-        self.update_fouls(row)
-        self.update_seasons(row)
-        self.update_last_n_matches(row)
+    def compute_team_stats(self, match_row):
+        """Calculates and updates the statistics for a given match row."""
+        self.update_results(match_row)
+        self.update_home_away_results(match_row)
+        self.update_win_streaks(match_row)
+        self.update_goals(match_row)
+        self.update_conceded_goals(match_row)
+        self.update_half_time_goals(match_row)
+        self.update_shots_on_goal(match_row)
+        self.update_shots_on_target(match_row)
+        self.update_yellow_cards(match_row)
+        self.update_red_cards(match_row)
+        self.update_corners(match_row)
+        self.update_possession(match_row)
+        self.update_fouls(match_row)
+        self.update_seasons(match_row)
+        self.update_last_n_matches(match_row)
 
-    def update_results(self, row):
-        if row['FTR'] == "H":
-            self.team_wins[row['HomeTeam']] += 1
-            self.team_losses[row['AwayTeam']] += 1
-        elif row['FTR'] == "A":
-            self.team_wins[row['AwayTeam']] += 1
-            self.team_losses[row['HomeTeam']] += 1
-        elif row['FTR'] == "D":
-            self.team_draws[row['HomeTeam']] += 1
-            self.team_draws[row['AwayTeam']] += 1
+    def update_results(self, match_row):
+        """Updates win, draw, and loss statistics for home and away teams based on the final result."""
+        if match_row['FTR'] == "H":
+            self.team_win_counts[match_row['HomeTeam']] += 1
+            self.team_loss_counts[match_row['AwayTeam']] += 1
+        elif match_row['FTR'] == "A":
+            self.team_win_counts[match_row['AwayTeam']] += 1
+            self.team_loss_counts[match_row['HomeTeam']] += 1
+        elif match_row['FTR'] == "D":
+            self.team_draw_counts[match_row['HomeTeam']] += 1
+            self.team_draw_counts[match_row['AwayTeam']] += 1
 
-    def update_home_away_results(self, row):
-        if row['FTR'] == "H":
-            self.team_home_wins[row['HomeTeam']] += 1
-            self.team_away_losses[row['AwayTeam']] += 1
-        elif row['FTR'] == "A":
-            self.team_away_wins[row['AwayTeam']] += 1
-            self.team_home_losses[row['HomeTeam']] += 1
-        elif row['FTR'] == "D":
-            self.team_home_draws[row['HomeTeam']] += 1
-            self.team_away_draws[row['AwayTeam']] += 1
+    def update_home_away_results(self, match_row):
+        """Updates home and away win, draw, and loss statistics."""
+        if match_row['FTR'] == "H":
+            self.team_home_win_counts[match_row['HomeTeam']] += 1
+            self.team_away_loss_counts[match_row['AwayTeam']] += 1
+        elif match_row['FTR'] == "A":
+            self.team_away_win_counts[match_row['AwayTeam']] += 1
+            self.team_home_loss_counts[match_row['HomeTeam']] += 1
+        elif match_row['FTR'] == "D":
+            self.team_home_draw_counts[match_row['HomeTeam']] += 1
+            self.team_away_draw_counts[match_row['AwayTeam']] += 1
     
-    def update_win_streak(self, row):
-        if row['FTR'] == "H":
-            self.team_win_streak[row['HomeTeam']] += 1
-            self.team_win_streak[row['AwayTeam']] = 0
-        elif row['FTR'] == "A":
-            self.team_win_streak[row['AwayTeam']] += 1
-            self.team_win_streak[row['HomeTeam']] = 0
-        elif row['FTR'] == "D":
-            self.team_win_streak[row['HomeTeam']] = 0
-            self.team_win_streak[row['AwayTeam']] = 0
+    def update_win_streaks(self, match_row):
+        """Updates the win streak count for teams, resetting it on a draw or loss."""
+        if match_row['FTR'] == "H":
+            self.team_win_streaks[match_row['HomeTeam']] += 1
+            self.team_win_streaks[match_row['AwayTeam']] = 0
+        elif match_row['FTR'] == "A":
+            self.team_win_streaks[match_row['AwayTeam']] += 1
+            self.team_win_streaks[match_row['HomeTeam']] = 0
+        elif match_row['FTR'] == "D":
+            self.team_win_streaks[match_row['HomeTeam']] = 0
+            self.team_win_streaks[match_row['AwayTeam']] = 0
 
     def update_goals(self, row):
         self.team_goals[row['HomeTeam']] += row['FTHG']
