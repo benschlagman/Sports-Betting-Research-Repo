@@ -1,7 +1,7 @@
 # Sports-Betting-Research-Repo
 
 ## Overview
-This project investigates the application of deep learning to sports betting, specifically targeting online exchanges like Betfair. The work was conducted in collaboration with Quant Sports Trading (QST) and is structured around three core experiments. The project integrates various types of sports data — pre-game, in-play, and exchange data — to facilitate sophisticated model building and in-depth analysis in sports betting.
+This project investigates the application of deep learning to sports betting, specifically using online exchanges like Betfair. The work was conducted in collaboration with Quant Sports Trading (QST) and is structured around three core experiments. The project integrates various types of sports data — pre-game, in-play, and exchange data — to facilitate sophisticated model building and in-depth analysis in sports betting.
 
 The project’s research is organised into three experiments, detailed in Chapters 3, 4, and 5 of the MSc Machine Learning thesis titled 'Deep Learning for Algorithmic Sports Betting':
 
