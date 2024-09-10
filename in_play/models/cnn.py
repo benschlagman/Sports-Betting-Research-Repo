@@ -3,7 +3,26 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class CNN(nn.Module):
+    """
+    A Convolutional Neural Network (CNN) for processing sequential data for multiple runners.
+
+    Parameters:
+    - input_dim (int): The number of input features.
+    - sequence_length (int): The length of the input sequence.
+    - num_classes (int): The number of output classes.
+    - num_runners (int): The number of runners (e.g., 3 for a 3-runner race).
+    """
+
     def __init__(self, input_dim, sequence_length, num_classes, num_runners):
+        """
+        Initialises the CNN with convolutional layers, pooling layers, and fully connected layers.
+
+        Parameters:
+        input_dim (int): The dimensionality of the input features.
+        sequence_length (int): The length of the input sequence.
+        num_classes (int): The number of output classes.
+        num_runners (int): The number of runners (e.g., 3 runners).
+        """
         super(CNN, self).__init__()
         
         # First Convolutional Block
@@ -20,20 +39,34 @@ class CNN(nn.Module):
         self.fc2 = nn.Linear(128, num_classes * num_runners)
         
     def forward(self, x):
-        x = x.permute(0, 2, 1)  # Convert to [batch_size, input_dim, sequence_length] for Conv1D
+        """
+        Defines the forward pass of the CNN model.
         
-        # Convolutional and Pooling Layers
+        Parameters:
+        x (Tensor): Input tensor of shape (batch_size, sequence_length, input_dim).
+        
+        Returns:
+        Tensor: Output tensor of shape (batch_size, num_runners, num_classes).
+        """
+        # Rearrange input to [batch_size, input_dim, sequence_length] for Conv1D
+        x = x.permute(0, 2, 1)
+        
+        # First Convolutional and Pooling Layer
         x = F.relu(self.conv1(x))
         x = self.pool1(x)
         
+        # Second Convolutional and Pooling Layer
         x = F.relu(self.conv2(x))
         x = self.pool2(x)
         
-        # Flatten and Fully Connected Layers
+        # Flatten the tensor for the fully connected layer
         x = x.view(x.size(0), -1)
+        
+        # Fully Connected Layers with Dropout
         x = F.relu(self.fc1(x))
         x = self.dropout(x)
         x = self.fc2(x)
         
-        x = x.view(x.size(0), 3, 2)  # Reshape to [batch_size, num_runners, num_classes]
+        # Reshape the output to [batch_size, num_runners, num_classes]
+        x = x.view(x.size(0), 3, 2)
         return x
